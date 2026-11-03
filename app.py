@@ -13,6 +13,8 @@ import pandas as pd
 import streamlit as st
 import yfinance as yf
 
+import analysis
+
 st.set_page_config(page_title="Market monitor", page_icon="📈", layout="wide")
 
 # ---------- Settings you can change ----------
@@ -550,6 +552,8 @@ if selected:
         ).set_index(""))
         if info.get("longBusinessSummary"):
             st.write(info["longBusinessSummary"])
+
+        analysis.render(market, r.to_dict(), info, tables[market])
 
 # ---------- Glossary ----------
 

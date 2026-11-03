@@ -18,11 +18,106 @@ st.set_page_config(page_title="Market monitor", page_icon="📈", layout="wide")
 # ---------- Settings you can change ----------
 
 DEFAULT_WATCHLIST = {
-    "US": "SPY, QQQ, AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, AVGO, BRK-B, JPM, V, LLY, XOM",
-    "B3": "^BVSP, PETR4.SA, VALE3.SA, ITUB4.SA, BBAS3.SA, BBDC4.SA, ABEV3.SA, WEGE3.SA, "
-          "B3SA3.SA, ITSA4.SA, BPAC11.SA, SUZB3.SA, PRIO3.SA, RENT3.SA, EMBJ3.SA",
-    "Oslo": "OSEBX.OL, EQNR.OL, DNB.OL, NHY.OL, MOWI.OL, KOG.OL, TEL.OL, YAR.OL, ORK.OL, "
-            "AKRBP.OL, SALM.OL, GJF.OL, STB.OL, FRO.OL, SUBC.OL",
+    "US": "SPY, QQQ, DIA, IWM, "
+          "AAPL, MSFT, NVDA, AVGO, ORCL, AMD, CRM, "
+          "GOOGL, META, NFLX, DIS, "
+          "AMZN, TSLA, MCD, HD, "
+          "WMT, COST, PG, KO, PEP, "
+          "BRK-B, JPM, V, MA, BAC, GS, "
+          "LLY, UNH, JNJ, ABBV, MRK, "
+          "XOM, CVX, CAT, GE, BA, NEE, LIN",
+    "B3": "^BVSP, "
+          "ITUB4.SA, BBAS3.SA, BBDC4.SA, SANB11.SA, BPAC11.SA, B3SA3.SA, ITSA4.SA, BBSE3.SA, "
+          "CXSE3.SA, HAPV3.SA, "
+          "PETR4.SA, PRIO3.SA, UGPA3.SA, CSAN3.SA, "
+          "VALE3.SA, SUZB3.SA, KLBN11.SA, GGBR4.SA, CSNA3.SA, "
+          "AXIA3.SA, SBSP3.SA, CMIG4.SA, EQTL3.SA, CPLE3.SA, EGIE3.SA, "
+          "ABEV3.SA, MBRF3.SA, RADL3.SA, RDOR3.SA, HYPE3.SA, "
+          "LREN3.SA, MGLU3.SA, VBBR3.SA, RENT3.SA, "
+          "WEGE3.SA, EMBJ3.SA, TOTS3.SA",
+    "Oslo": "OSEBX.OL, "
+            "EQNR.OL, AKRBP.OL, VAR.OL, SUBC.OL, AKSO.OL, TGS.OL, BWLPG.OL, "
+            "DNB.OL, STB.OL, GJF.OL, PROT.OL, "
+            "MOWI.OL, SALM.OL, BAKKA.OL, LSG.OL, ORK.OL, "
+            "KOG.OL, AKER.OL, TOM.OL, AUTO.OL, AFG.OL, NEL.OL, NAS.OL, "
+            "FRO.OL, HAFNI.OL, WAWI.OL, MPCC.OL, "
+            "NHY.OL, YAR.OL, ELK.OL, "
+            "TEL.OL, VEND.OL, NOD.OL, KIT.OL, ENTRA.OL",
+}
+
+# Hover text for every indicator: what it is, and why it matters
+HELP = {
+    "Ticker": "The stock's symbol on Yahoo Finance. .SA = B3 (Brazil), .OL = Oslo Børs, ^ = index.",
+    "Company": "Company name as registered on the exchange.",
+    "Sector": "Broad business area (e.g. Energy, Technology). Stocks in the same sector tend to "
+              "move together, so compare a stock with its sector peers, not the whole market.",
+    "Industry": "Narrower business area within the sector. Best basis for peer comparison.",
+    "Price": "Last closing price in the currency the stock trades in.",
+    "Converted price": "Last price converted at today's exchange rate. Useful to compare what a "
+                       "share costs across markets; indices are points, not money, so not converted.",
+    "1D %": "Change since the previous close. Shows today's momentum and flags news-driven moves.",
+    "1W %": "Change over the last 7 days. Separates a one-day blip from a short-term trend.",
+    "1M %": "Change over the last month. Short-term trend.",
+    "YTD %": "Change since the last close of the previous year. The standard way to compare "
+             "how investments are doing this year.",
+    "1Y %": "Change over the last 12 months, including dividends reinvested (adjusted prices). "
+            "Long enough to smooth out noise.",
+    "From 52w high %": "How far the price is below its highest close in the last year. Near 0% means "
+                       "trading at the top of its range; a deep negative means a big pullback - "
+                       "either a bargain or a sign of trouble.",
+    "Market cap": "Share price x number of shares: what the market values the whole company at. "
+                  "Bigger companies are usually more stable; smaller ones can grow (and fall) faster.",
+    "Volume": "Shares traded on the last day. Unusually high volume means something is happening "
+              "and that the price move has conviction behind it.",
+    "Date": "Date of the last price.",
+    "P/E": "Price / earnings per share over the last 12 months. How many years of current profit you "
+           "pay for. Lower can mean cheap (or a business in decline), higher means investors expect "
+           "growth. Compare within the same industry.",
+    "Fwd P/E": "Price / analysts' expected earnings for the next 12 months. Lower than P/E means "
+               "profits are expected to grow.",
+    "P/B": "Price / book value (assets minus debts) per share. Below 1 means you pay less than the "
+           "accounting value of the company. Most useful for banks, insurers and asset-heavy firms.",
+    "P/S": "Price / revenue per share. Works even when the company has no profit, so it is handy for "
+           "growth companies. Margins differ by industry, so compare peers.",
+    "EV/EBITDA": "Company value including debt / operating profit before depreciation. Like P/E but "
+                 "neutral to how the company is financed, so better for comparing firms with "
+                 "different debt levels. Below ~8 is often considered cheap. Not meaningful for banks.",
+    "Div yield %": "Annual dividend / price. The cash return you get just for holding the share. Very "
+                   "high yields (10%+) can signal the market expects a dividend cut.",
+    "Profit margin %": "Net profit / revenue. How much of each sale the company keeps. Higher margins "
+                       "usually mean pricing power and more room to absorb bad years.",
+    "ROE %": "Return on equity: net profit / shareholders' equity. How well the company turns "
+             "shareholders' money into profit. Above ~15% is generally strong.",
+    "Beta": "How much the stock moves versus the overall market. 1 = moves with the market, "
+            "above 1 = swings more, below 1 = calmer, negative = tends to move the opposite way.",
+    "EPS (ttm)": "Earnings per share: net profit over the last 12 months divided by the number of "
+                 "shares. The profit each share 'owns'. Growing EPS over time is what drives share "
+                 "prices up in the long run.",
+    "EPS (fwd)": "Analysts' expected earnings per share for the next 12 months. Higher than EPS (ttm) "
+                 "means profit growth is expected.",
+    "Book value": "Equity per share: what each share would get if the company sold all its assets "
+                  "and paid all its debts, at accounting values. A floor for valuing banks and "
+                  "asset-heavy companies.",
+    "Revenue": "Sales per share over the last 12 months. Shows the size of the business behind each "
+               "share; the base for P/S.",
+    "Cash": "Cash and short-term investments per share. A cushion for bad times, buybacks or "
+            "acquisitions; compare with the share price.",
+    "Dividend": "Expected annual dividend paid per share, in the trading currency.",
+    "Analyst target": "Average 12-month price target from the analysts covering the stock. An "
+                      "opinion, not a forecast you can rely on, but shows market sentiment.",
+    "Upside %": "Distance from today's price to the analyst target. Positive = analysts think the "
+                "stock can rise.",
+    "Rating": "Analysts' consensus recommendation (strong buy to sell).",
+}
+
+SECTOR_SUMMARY_HELP = {
+    "Stocks": "Number of stocks from your watchlist in this sector.",
+    "Avg 1D %": "Average one-day change of the stocks in this sector.",
+    "Avg 1M %": "Average one-month change of the stocks in this sector.",
+    "Avg YTD %": "Average year-to-date change of the stocks in this sector.",
+    "Median P/E": "Typical P/E in this sector. Use it as the benchmark when judging whether a single "
+                  "stock's P/E is high or low.",
+    "Median yield %": "Typical dividend yield in this sector.",
 }
 MARKET_CURRENCY = {"US": "USD", "B3": "BRL", "Oslo": "NOK"}
 
@@ -54,7 +149,7 @@ def _fetch_info(ticker: str) -> dict:
 
 @st.cache_data(ttl=86400)  # fundamentals change slowly, keep them for a day
 def get_infos(tickers: tuple) -> dict:
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=10) as pool:
         return dict(zip(tickers, pool.map(_fetch_info, tickers)))
 
 
@@ -265,42 +360,117 @@ else:
     st.success(f"Nothing moved more than {threshold:.1f}% today.")
 
 view = st.radio("Show", list(VIEWS), horizontal=True, key="view")
+st.caption("Hover over a column name to see what the indicator means and why it matters.")
 if view == "Per share":
     st.caption("Per-share figures in the trading currency. Revenue and cash are per share, "
                "dividend is the annual rate, target is the analysts' mean price.")
+
+FUND_TYPES = ("Index", "ETF")  # shown first, they are benchmarks rather than companies
+
+
+def sector_order(df: pd.DataFrame) -> list:
+    counts = df["Sector"].value_counts()
+    funds = [s for s in FUND_TYPES if s in counts]
+    rest = [s for s in counts.index if s not in FUND_TYPES]  # biggest sectors first
+    return funds + rest
+
+
+def render_table(df: pd.DataFrame, currency: str, key: str):
+    cols = [c for c in VIEWS[view] if c in df.columns]
+    if "Industry" not in cols and view == "Overview":
+        cols.insert(cols.index("Sector") + 1, "Industry")
+    table = df[cols].copy()
+
+    fmt = {c: "{:+.2f}%" for c in PCT_COLS if c in cols}
+    fmt.update({c: "{:,.2f}" for c in MONEY_COLS if c in cols})
+    fmt.update({c: "{:.1f}" for c in RATIO_COLS if c in cols})
+    fmt.update({c: human for c in ("Market cap", "Volume") if c in cols})
+    for c in ("Div yield %", "Profit margin %", "ROE %"):
+        if c in cols:
+            fmt[c] = "{:.1f}%"
+
+    help_text = {c: HELP.get(c) for c in cols}
+
+    target = display_currency
+    if target not in ("Local only", currency):
+        col = f"Price ({target})"
+        table.insert(cols.index("Price") + 1, col, [
+            None if s == "Index" else convert(p, currency, target)
+            for s, p in zip(df["Sector"], df["Price"])
+        ])
+        fmt[col] = "{:,.2f}"
+        help_text[col] = HELP["Converted price"]
+
+    price_col = f"Price ({currency})"
+    table = table.rename(columns={"Price": price_col})
+    fmt[price_col] = fmt.pop("Price")
+    help_text[price_col] = help_text.pop("Price")
+
+    styled = table.style.format(fmt, na_rep="-").map(
+        color_change, subset=[c for c in COLORED_COLS if c in table.columns]
+    )
+    st.dataframe(
+        styled, hide_index=True, width="stretch", key=key,
+        column_config={c: st.column_config.Column(help=h) for c, h in help_text.items() if h},
+    )
+
+
+def sector_summary(df: pd.DataFrame, sectors: list) -> pd.DataFrame:
+    rows = []
+    for s in sectors:
+        sub = df[df["Sector"] == s]
+        rows.append({
+            "Sector": s,
+            "Stocks": len(sub),
+            "Avg 1D %": sub["1D %"].mean(),
+            "Avg 1M %": sub["1M %"].mean(),
+            "Avg YTD %": sub["YTD %"].mean(),
+            "Median P/E": sub["P/E"].median(),
+            "Median yield %": sub["Div yield %"].median(),
+        })
+    return pd.DataFrame(rows)
+
 
 # One tab per market
 tabs = st.tabs(list(tables))
 for tab, (market, df) in zip(tabs, tables.items()):
     with tab:
         currency = MARKET_CURRENCY[market]
-        cols = [c for c in VIEWS[view] if c in df.columns]
-        table = df[cols].copy()
+        df = df.assign(Sector=df["Sector"].replace("", "Other"))
+        df = df.sort_values("Market cap", ascending=False, na_position="first")
+        all_sectors = sector_order(df)
 
-        fmt = {c: "{:+.2f}%" for c in PCT_COLS if c in cols}
-        fmt.update({c: "{:,.2f}" for c in MONEY_COLS if c in cols})
-        fmt.update({c: "{:.1f}" for c in RATIO_COLS if c in cols})
-        fmt.update({c: human for c in ("Market cap", "Volume") if c in cols})
-        for c in ("Div yield %", "Profit margin %", "ROE %"):
-            if c in cols:
-                fmt[c] = "{:.1f}%"
+        c1, c2 = st.columns([4, 1])
+        chosen = c1.multiselect(
+            "Sectors", all_sectors, placeholder="All sectors", key=f"sectors_{market}",
+            help="Pick one or more sectors to narrow the list. Leave empty to show all.",
+        ) or all_sectors
+        grouped = c2.toggle("Group by sector", value=True, key=f"group_{market}",
+                            help="Show one table per sector, so you compare each stock with its peers.")
 
-        target = display_currency
-        if target not in ("Local only", currency):
-            col = f"Price ({target})"
-            table.insert(cols.index("Price") + 1, col, [
-                None if t.startswith("^") or s == "Index" else convert(p, currency, target)
-                for t, s, p in zip(df["Ticker"], df["Sector"], df["Price"])
-            ])
-            fmt[col] = "{:,.2f}"
+        companies = [s for s in chosen if s not in FUND_TYPES]
+        if companies:
+            with st.expander("Sector summary", expanded=False):
+                summary = sector_summary(df, companies)
+                st.dataframe(
+                    summary.style.format({
+                        "Avg 1D %": "{:+.2f}%", "Avg 1M %": "{:+.2f}%", "Avg YTD %": "{:+.2f}%",
+                        "Median P/E": "{:.1f}", "Median yield %": "{:.1f}%",
+                    }, na_rep="-").map(color_change, subset=["Avg 1D %", "Avg 1M %", "Avg YTD %"]),
+                    hide_index=True, width="stretch", key=f"summary_{market}",
+                    column_config={c: st.column_config.Column(help=h)
+                                   for c, h in SECTOR_SUMMARY_HELP.items()},
+                )
 
-        table = table.rename(columns={"Price": f"Price ({currency})"})
-        fmt[f"Price ({currency})"] = fmt.pop("Price")
-
-        styled = table.style.format(fmt, na_rep="-").map(
-            color_change, subset=[c for c in COLORED_COLS if c in table.columns]
-        )
-        st.dataframe(styled, hide_index=True, width="stretch")
+        if grouped:
+            for s in chosen:
+                sub = df[df["Sector"] == s]
+                avg = sub["1D %"].mean()
+                today = f" · avg today {avg:+.2f}%" if pd.notna(avg) else ""
+                st.markdown(f"**{s}** · {len(sub)} {'item' if len(sub) == 1 else 'items'}{today}")
+                render_table(sub, currency, key=f"table_{market}_{s}")
+        else:
+            render_table(df[df["Sector"].isin(chosen)], currency, key=f"table_{market}")
 
 # ---------- Single stock detail ----------
 
@@ -326,22 +496,30 @@ if selected:
                                       info.get("country")) if x))
 
     m = st.columns(5)
-    m[0].metric(f"Price ({cur})", val("Price"), val("1D %", "{:+.2f}", "%"))
-    m[1].metric("1 month", val("1M %", "{:+.1f}", "%"))
-    m[2].metric("Year to date", val("YTD %", "{:+.1f}", "%"))
-    m[3].metric("1 year", val("1Y %", "{:+.1f}", "%"))
-    m[4].metric("52w range", f"{val('52w low')} – {val('52w high')}")
+    m[0].metric(f"Price ({cur})", val("Price"), val("1D %", "{:+.2f}", "%"),
+                help=HELP["Price"] + " Arrow: " + HELP["1D %"])
+    m[1].metric("1 month", val("1M %", "{:+.1f}", "%"), help=HELP["1M %"])
+    m[2].metric("Year to date", val("YTD %", "{:+.1f}", "%"), help=HELP["YTD %"])
+    m[3].metric("1 year", val("1Y %", "{:+.1f}", "%"), help=HELP["1Y %"])
+    m[4].metric("52w range", f"{val('52w low')} – {val('52w high')}",
+                help="Lowest and highest close over the last year. Shows where today's price sits "
+                     "in its recent range.")
 
     m = st.columns(5)
-    m[0].metric("Market cap", human(r.get("Market cap")))
-    m[1].metric("P/E (fwd)", f"{val('P/E', '{:.1f}')} ({val('Fwd P/E', '{:.1f}')})")
-    m[2].metric("Dividend / yield", f"{val('Dividend')} / {val('Div yield %', '{:.1f}', '%')}")
-    m[3].metric("EPS ttm (fwd)", f"{val('EPS (ttm)')} ({val('EPS (fwd)')})")
+    m[0].metric("Market cap", human(r.get("Market cap")), help=HELP["Market cap"])
+    m[1].metric("P/E (fwd)", f"{val('P/E', '{:.1f}')} ({val('Fwd P/E', '{:.1f}')})",
+                help=HELP["P/E"] + "\n\nIn brackets: " + HELP["Fwd P/E"])
+    m[2].metric("Dividend / yield", f"{val('Dividend')} / {val('Div yield %', '{:.1f}', '%')}",
+                help=HELP["Dividend"] + "\n\n" + HELP["Div yield %"])
+    m[3].metric("EPS ttm (fwd)", f"{val('EPS (ttm)')} ({val('EPS (fwd)')})",
+                help=HELP["EPS (ttm)"] + "\n\nIn brackets: " + HELP["EPS (fwd)"])
     analysts = r.get("Analysts")
+    coverage = (f"\n\nConsensus: {r['Rating'] or 'no rating'}, {int(analysts)} analysts."
+                if analysts and pd.notna(analysts) else "")
     m[4].metric(
         "Analyst target", val("Analyst target"),
-        val("Upside %", "{:+.1f}", "% upside") if r.get("Upside %") is not None else None,
-        help=f"{r['Rating'] or 'no rating'}, {int(analysts)} analysts" if analysts and pd.notna(analysts) else None,
+        val("Upside %", "{:+.1f}", "% upside") if pd.notna(r.get("Upside %")) else None,
+        help=HELP["Analyst target"] + coverage,
     )
 
     history = get_history(selected, period)
@@ -372,3 +550,11 @@ if selected:
         ).set_index(""))
         if info.get("longBusinessSummary"):
             st.write(info["longBusinessSummary"])
+
+# ---------- Glossary ----------
+
+with st.expander("What do these indicators mean?"):
+    skip = {"Ticker", "Company", "Date", "Converted price"}
+    for name, text in HELP.items():
+        if name not in skip:
+            st.markdown(f"**{name}** - {text}")

@@ -26,10 +26,27 @@ FX_TICKERS = {"USD": "USDNOK=X", "BRL": "BRLNOK=X"}  # price of 1 unit in NOK
 
 # ---------- Data ----------
 
+@st.cache_data(ttl=86400)  # names and sectors rarely change, so keep them for a day
+def get_info(ticker: str) -> dict:
+    try:
+        info = yf.Ticker(ticker).info or {}
+    except Exception:
+        info = {}
+    name = info.get("longName") or info.get("shortName") or ""  # B3 short names are cryptic
+    sector = info.get("sector") or ""
+    if not sector:
+        if ticker.startswith("^"):
+            sector = "Index"
+        elif info.get("quoteType") == "ETF":
+            sector = "ETF"
+    return {"Company": name, "Sector": sector}
+
+
 @st.cache_data(ttl=300)  # reuse data for 5 minutes, avoids hammering Yahoo
 def get_quotes(tickers: tuple) -> pd.DataFrame:
     rows = []
     for t in tickers:
+        info = get_info(t)
         try:
             closes = yf.Ticker(t).history(period="5d")["Close"].dropna()
             if len(closes) < 2:
@@ -37,12 +54,13 @@ def get_quotes(tickers: tuple) -> pd.DataFrame:
             last, prev = float(closes.iloc[-1]), float(closes.iloc[-2])
             rows.append({
                 "Ticker": t,
+                **info,
                 "Price": last,
                 "Change %": (last / prev - 1) * 100,
                 "Date": closes.index[-1].strftime("%d %b"),
             })
         except Exception:
-            rows.append({"Ticker": t, "Price": None, "Change %": None, "Date": "no data"})
+            rows.append({"Ticker": t, **info, "Price": None, "Change %": None, "Date": "no data"})
     return pd.DataFrame(rows)
 
 
@@ -122,7 +140,8 @@ for market, df in quotes.items():
     for _, row in df.iterrows():
         chg = row["Change %"]
         if chg is not None and not pd.isna(chg) and abs(chg) >= threshold:
-            alerts.append(f"{row['Ticker']} ({market}) {chg:+.2f}%")
+            label = f"{row['Company']} ({row['Ticker']})" if row["Company"] else row["Ticker"]
+            alerts.append(f"{label}, {market}: {chg:+.2f}%")
 if alerts:
     st.warning("Big moves today: " + "  |  ".join(alerts))
 else:
@@ -156,7 +175,10 @@ for tab, (market, df) in zip(tabs, quotes.items()):
 st.subheader("Price history")
 all_tickers = [t for tickers in watchlist.values() for t in tickers]
 col1, col2 = st.columns([2, 1])
-selected = col1.selectbox("Ticker", all_tickers)
+selected = col1.selectbox(
+    "Ticker", all_tickers,
+    format_func=lambda t: f"{t} - {get_info(t)['Company']}" if get_info(t)["Company"] else t,
+)
 period = col2.radio("Period", ["1mo", "6mo", "1y", "5y"], index=2, horizontal=True)
 
 if selected:
@@ -165,5 +187,8 @@ if selected:
         st.info("No history found for this ticker.")
     else:
         change = (history.iloc[-1] / history.iloc[0] - 1) * 100
+        info = get_info(selected)
+        if info["Company"]:
+            st.caption(" · ".join(x for x in (info["Company"], info["Sector"]) if x))
         st.metric(selected, f"{history.iloc[-1]:,.2f}", f"{change:+.1f}% over {period}")
         st.line_chart(history, height=350)
